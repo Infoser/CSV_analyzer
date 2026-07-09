@@ -1,0 +1,7 @@
+created_at,name,email,country_code,mobile_without_country_code,company,city,state,country,lead_owner,crm_status,crm_note,data_source,possession_time,description
+2026-05-13 14:20:48,John Doe,john.doe@example.com,+91,9876543210,GrowEasy,Mumbai,Maharashtra,India,test@gmail.com,GOOD_LEAD_FOLLOW_UP,Client is asking to reschedule demo,leads_on_demand,2026-06-15,Interested in 2BHK flat
+2026-05-13 14:25:30,Sarah Johnson,sarah.johnson@example.com,+91,9876543211,Tech Solutions,Bangalore,Karnataka,India,test@gmail.com,DID_NOT_CONNECT,"Person was busy, will try again next week",meridian_tower,2026-07-01,Looking for commercial space
+2026-05-13 14:30:15,Rajesh Patel,rajesh.patel@example.com,+91,9876543212,Startup Inc,Delhi,Delhi,India,test@gmail.com,BAD_LEAD,Not interested in our services,eden_park,2026-08-01,Budget constraints
+2026-05-13 14:35:22,Priya Singh,priya.singh@example.com,+91,9876543213,Enterprise Corp,Pune,Maharashtra,India,test@gmail.com,SALE_DONE,"Deal closed, onboarding in progress",varah_swamy,2026-05-20,Premium apartment purchased
+2026-05-13 14:40:10,Amit Kumar,amit.kumar@example.com,+91,9876543214,Freelancer,Hyderabad,Telangana,India,test@gmail.com,GOOD_LEAD_FOLLOW_UP,Wants site visit this weekend,sarjapur_plots,2026-09-01,Plot investment inquiry
+2026-05-13 14:45:55,Neha Sharma,neha.sharma@example.com,+91,9876543215,Global Tech,Chennai,Tamil Nadu,India,test@gmail.com,DID_NOT_CONNECT,Phone switched off,leads_on_demand,2026-06-30,Follow up after 2 weeks

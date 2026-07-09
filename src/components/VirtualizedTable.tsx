@@ -1,41 +1,38 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
-import dynamic from 'next/dynamic';
-import { ChevronLeft, ChevronRight, Search, Filter, Eye, EyeOff } from 'lucide-react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { cn, truncate } from '@/lib/utils';
-import { CSVRow } from '@/types';
+import { Search, Filter, ChevronLeft, ChevronRight, Eye, EyeOff } from 'lucide-react';
 
-const VirtualizedTable = dynamic(
-  () => import('./VirtualizedTable').then(mod => mod.VirtualizedTable),
-  { ssr: false }
-);
-
-interface DataTableProps {
+interface VirtualizedTableProps {
   headers: string[];
-  rows: CSVRow[];
+  rows: Record<string, string>[];
   title?: string;
-  showPagination?: boolean;
   rowsPerPage?: number;
   searchable?: boolean;
-  onRowClick?: (row: CSVRow, index: number) => void;
+  onRowClick?: (row: Record<string, string>, index: number) => void;
   className?: string;
+  itemHeight?: number;
+  containerHeight?: number;
 }
 
-export function DataTable({
+export function VirtualizedTable({
   headers,
   rows,
   title,
-  showPagination = true,
-  rowsPerPage = 10,
+  rowsPerPage = 50,
   searchable = true,
   onRowClick,
   className,
-}: DataTableProps) {
-  const [currentPage, setCurrentPage] = useState(1);
+  itemHeight = 48,
+  containerHeight = 600,
+}: VirtualizedTableProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [visibleColumns, setVisibleColumns] = useState<string[]>(headers);
   const [showColumnPicker, setShowColumnPicker] = useState(false);
+  const [scrollTop, setScrollTop] = useState(0);
+  
+  const tableRef = useRef<HTMLDivElement>(null);
 
   const filteredRows = useMemo(() => {
     if (!searchQuery) return rows;
@@ -47,25 +44,27 @@ export function DataTable({
     );
   }, [rows, headers, searchQuery]);
 
-  const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
-  const paginatedRows = showPagination
-    ? filteredRows.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage)
-    : filteredRows;
+  const visibleStartIndex = Math.floor(scrollTop / itemHeight);
+  const visibleEndIndex = Math.min(
+    visibleStartIndex + Math.ceil(containerHeight / itemHeight) + 1,
+    filteredRows.length
+  );
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
-  };
+  const visibleRows = filteredRows.slice(visibleStartIndex, visibleEndIndex);
+  const totalHeight = filteredRows.length * itemHeight;
+  const offsetY = visibleStartIndex * itemHeight;
 
-  const toggleColumn = (column: string) => {
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    setScrollTop(e.currentTarget.scrollTop);
+  }, []);
+
+  const toggleColumn = useCallback((column: string) => {
     setVisibleColumns(prev =>
       prev.includes(column)
         ? prev.filter(c => c !== column)
         : [...prev, column]
     );
-  };
-
-  // Use virtualized table for large datasets (>100 rows)
-  const useVirtualized = filteredRows.length > 100;
+  }, []);
 
   if (rows.length === 0) {
     return (
@@ -80,22 +79,6 @@ export function DataTable({
           {searchQuery ? 'No rows match your search' : 'Upload a CSV file to see data'}
         </p>
       </div>
-    );
-  }
-
-  // Render virtualized table for large datasets
-  if (useVirtualized) {
-    return (
-      <VirtualizedTable
-        headers={headers}
-        rows={filteredRows}
-        title={title}
-        rowsPerPage={rowsPerPage}
-        searchable={searchable}
-        onRowClick={onRowClick}
-        className={className}
-        containerHeight={600}
-      />
     );
   }
 
@@ -119,10 +102,7 @@ export function DataTable({
                   type="text"
                   placeholder="Search rows..."
                   value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setCurrentPage(1);
-                  }}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
@@ -157,99 +137,100 @@ export function DataTable({
         </div>
       )}
 
-      <div className="overflow-x-auto overflow-y-hidden">
-        <table className="w-full min-w-max" role="grid">
-          <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-900/90 backdrop-blur-sm">
-            <tr>
-              {visibleColumns.map(header => (
-                <th
-                  key={header}
-                  className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap border-b border-gray-200 dark:border-gray-700"
-                  style={{ minWidth: '120px', maxWidth: '300px' }}
-                >
-                  {header}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-            {paginatedRows.map((row, rowIndex) => (
-              <tr
-                key={rowIndex}
-                onClick={() => onRowClick?.(row, rowIndex)}
-                className={cn(
-                  'transition-colors',
-                  onRowClick && 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50'
-                )}
-              >
+      <div 
+        ref={tableRef}
+        className="relative"
+        style={{ height: containerHeight }}
+        onScroll={handleScroll}
+      >
+        <div style={{ height: totalHeight, position: 'relative' }}>
+          <table className="w-full min-w-max" role="grid">
+            <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-900/90 backdrop-blur-sm">
+              <tr>
                 {visibleColumns.map(header => (
-                  <td
+                  <th
                     key={header}
-                    className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap border-b border-gray-100 dark:border-gray-800 max-w-[300px] overflow-hidden"
-                    title={String(row[header] || '')}
+                    className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap border-b border-gray-200 dark:border-gray-700"
+                    style={{ minWidth: '120px', maxWidth: '300px' }}
                   >
-                    {truncate(String(row[header] || ''), 50)}
-                  </td>
+                    {header}
+                  </th>
                 ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              <div 
+                style={{ 
+                  position: 'absolute', 
+                  top: offsetY, 
+                  left: 0, 
+                  right: 0 
+                }}
+              >
+                {visibleRows.map((row, rowIndex) => {
+                  const actualIndex = visibleStartIndex + rowIndex;
+                  return (
+                    <tr
+                      key={actualIndex}
+                      onClick={() => onRowClick?.(row, actualIndex)}
+                      className={cn(
+                        'transition-colors',
+                        onRowClick && 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                      )}
+                      style={{ height: itemHeight }}
+                    >
+                      {visibleColumns.map(header => (
+                        <td
+                          key={header}
+                          className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap border-b border-gray-100 dark:border-gray-800 max-w-[300px] overflow-hidden"
+                          title={String(row[header] || '')}
+                        >
+                          {truncate(String(row[header] || ''), 50)}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
+              </div>
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {showPagination && totalPages > 1 && (
+      {filteredRows.length > rowsPerPage && (
         <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-700">
           <div className="text-sm text-gray-500 dark:text-gray-400">
-            Showing {(currentPage - 1) * rowsPerPage + 1} to{' '}
-            {Math.min(currentPage * rowsPerPage, filteredRows.length)} of{' '}
-            {filteredRows.length} rows
+            Showing {visibleStartIndex + 1} to {Math.min(visibleEndIndex, filteredRows.length)} of {filteredRows.length} rows
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
+              onClick={() => {
+                const scrollContainer = tableRef.current;
+                if (scrollContainer) {
+                  scrollContainer.scrollTop = Math.max(0, scrollContainer.scrollTop - containerHeight);
+                }
+              }}
               className={cn(
                 'p-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400',
-                'hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
+                'hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors'
               )}
               aria-label="Previous page"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <div className="flex items-center gap-1">
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                let pageNum: number;
-                if (totalPages <= 5) {
-                  pageNum = i + 1;
-                } else if (currentPage <= 3) {
-                  pageNum = i + 1;
-                } else if (currentPage >= totalPages - 2) {
-                  pageNum = totalPages - 4 + i;
-                } else {
-                  pageNum = currentPage - 2 + i;
-                }
-                return (
-                  <button
-                    key={pageNum}
-                    onClick={() => handlePageChange(pageNum)}
-                    className={cn(
-                      'w-8 h-8 rounded-lg text-sm font-medium transition-colors',
-                      currentPage === pageNum
-                        ? 'bg-primary-600 text-white'
-                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                    )}
-                  >
-                    {pageNum}
-                  </button>
-                );
-              })}
-            </div>
             <button
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
+              onClick={() => {
+                const scrollContainer = tableRef.current;
+                if (scrollContainer) {
+                  scrollContainer.scrollTop = Math.min(
+                    scrollContainer.scrollHeight - scrollContainer.clientHeight,
+                    scrollContainer.scrollTop + containerHeight
+                  );
+                }
+              }}
               className={cn(
                 'p-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400',
-                'hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
+                'hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors'
               )}
               aria-label="Next page"
             >

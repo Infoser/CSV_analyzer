@@ -60,7 +60,7 @@ Return JSON with:
   "skipped_records": [{"id": "...", "original_data": {...}, "reason": "...", "confidence": 0.2}]
 }`;
 
-function buildUserPrompt(headers: string[], sampleRows: Record<string, string>[], totalRows: number): string {
+export function buildUserPrompt(headers: string[], sampleRows: Record<string, string>[], totalRows: number): string {
   const sampleData = sampleRows.slice(0, 5).map((row, i) => 
     `Row ${i + 1}: ${JSON.stringify(row)}`
   ).join('\n');
@@ -74,28 +74,95 @@ ${sampleData}
 Analyze and map columns to CRM fields. Extract all leads.`;
 }
 
-function parsePhoneNumber(phone: string): { country_code: string; mobile: string } | null {
+export function parsePhoneNumber(phone: string): { country_code: string; mobile: string } | null {
   if (!phone) return null;
   
   const cleaned = phone.replace(/[\s\-\(\)]/g, '');
   
-  // Check for international format
-  const intlMatch = cleaned.match(/^\+(\d{1,3})(\d+)$/);
-  if (intlMatch) {
-    return { country_code: `+${intlMatch[1]}`, mobile: intlMatch[2] };
+  // Known country codes by length
+  const threeDigitCodes = ['91', '86', '44', '49', '33', '81', '82', '61', '63', '62', '66', '60', '65', '84', '95'];
+  const twoDigitCodes = ['1', '7', '20', '27', '30', '31', '32', '34', '36', '39', '40', '41', '43', '45', '46', '47', '48', '51', '52', '53', '54', '55', '56', '57', '58', '60', '62', '63', '64', '65', '66', '81', '82', '84', '86', '90', '91', '92', '93', '94', '95', '98', '99'];
+  
+  // Try + prefix - 3-digit country codes first
+  for (const code of threeDigitCodes) {
+    const pattern = new RegExp(`^\\+${code}(\\d{8,})$`);
+    const match = cleaned.match(pattern);
+    if (match) {
+      return { country_code: `+${code}`, mobile: match[1] };
+    }
   }
   
-  // Check for 00 prefix
-  const zeroMatch = cleaned.match(/^00(\d{1,3})(\d+)$/);
-  if (zeroMatch) {
-    return { country_code: `+${zeroMatch[1]}`, mobile: zeroMatch[2] };
+  // Try + prefix - 2-digit country codes
+  for (const code of twoDigitCodes) {
+    const pattern = new RegExp(`^\\+${code}(\\d{8,})$`);
+    const match = cleaned.match(pattern);
+    if (match) {
+      return { country_code: `+${code}`, mobile: match[1] };
+    }
+  }
+  
+  // Try + prefix - 1-digit country codes (e.g., +7, +1)
+  const oneDigitMatch = cleaned.match(/^\+(\d)(\d{9,})$/);
+  if (oneDigitMatch) {
+    return { country_code: `+${oneDigitMatch[1]}`, mobile: oneDigitMatch[2] };
+  }
+  
+  // Check for 00 prefix - try known 3-digit codes first
+  for (const code of threeDigitCodes) {
+    const pattern = new RegExp(`^00${code}(\\d{8,})$`);
+    const match = cleaned.match(pattern);
+    if (match) {
+      return { country_code: `+${code}`, mobile: match[1] };
+    }
+  }
+  
+  // Try 2-digit codes for 00 prefix
+  for (const code of twoDigitCodes) {
+    const pattern = new RegExp(`^00${code}(\\d{8,})$`);
+    const match = cleaned.match(pattern);
+    if (match) {
+      return { country_code: `+${code}`, mobile: match[1] };
+    }
   }
   
   // Default: assume no country code
   return { country_code: '', mobile: cleaned };
 }
 
-function combineNames(row: Record<string, string>, mappings: CSVFieldMapping[]): string {
+// Retry utility with exponential backoff
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  maxRetries: number = 3,
+  baseDelay: number = 1000
+): Promise<Response> {
+  let lastError: Error | null = null;
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(url, options);
+      
+      // Retry on server errors (5xx) and rate limits (429)
+      if (response.status >= 500 || response.status === 429) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
+      return response;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      
+      if (attempt < maxRetries) {
+        const delay = baseDelay * Math.pow(2, attempt);
+        console.log(`AI API call failed (attempt ${attempt + 1}/${maxRetries + 1}), retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+  
+  throw lastError || new Error('Max retries exceeded');
+}
+
+export function combineNames(row: Record<string, string>, mappings: CSVFieldMapping[]): string {
   const nameFields = mappings.filter(m => 
     m.crm_field === 'name' && row[m.csv_field]
   );
@@ -136,7 +203,7 @@ export async function extractLeadsWithAI(
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60000);
 
-    const response = await fetch(`${apiBase}/chat/completions`, {
+    const fetchOptions: RequestInit = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -153,7 +220,9 @@ export async function extractLeadsWithAI(
         max_tokens: 2000,
       }),
       signal: controller.signal,
-    });
+    };
+
+    const response = await fetchWithRetry(`${apiBase}/chat/completions`, fetchOptions);
 
     clearTimeout(timeoutId);
 
@@ -172,13 +241,13 @@ export async function extractLeadsWithAI(
     if (error instanceof Error && error.name === 'AbortError') {
       console.error('AI extraction timeout after 60s, falling back to heuristic extraction');
     } else {
-      console.error('AI extraction error:', error);
+      console.error('AI extraction error after retries:', error);
     }
     return fallbackExtraction(headers, rows, sampleRows);
   }
 }
 
-function fallbackExtraction(
+export function fallbackExtraction(
   headers: string[],
   rows: Record<string, string>[],
   sampleRows: Record<string, string>[]
