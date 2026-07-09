@@ -133,6 +133,9 @@ export async function extractLeadsWithAI(
   }
 
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
+
     const response = await fetch(`${apiBase}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -149,7 +152,10 @@ export async function extractLeadsWithAI(
         response_format: { type: 'json_object' },
         max_tokens: 4000,
       }),
+      signal: controller.signal,
     });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const error = await response.text();
@@ -163,7 +169,11 @@ export async function extractLeadsWithAI(
     // Validate and enhance results
     return validateAndEnhanceResult(result, rows, headers);
   } catch (error) {
-    console.error('AI extraction error:', error);
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.error('AI extraction timeout after 60s, falling back to heuristic extraction');
+    } else {
+      console.error('AI extraction error:', error);
+    }
     return fallbackExtraction(headers, rows, sampleRows);
   }
 }
