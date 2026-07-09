@@ -1,0 +1,9 @@
+first_name,last_name,email,phone,company,city,state,country,lead_source,notes,created_date
+John,Doe,john.doe@example.com,+91 9876543210,GrowEasy,Mumbai,Maharashtra,India,Facebook Leads,Client is asking to reschedule demo,2026-05-13 14:20:48
+Sarah,Johnson,sarah.johnson@example.com,+91 9876543211,Tech Solutions,Bangalore,Karnataka,India,Google Ads,Person was busy will try again next week,2026-05-13 14:25:30
+Rajesh,Patel,rajesh.patel@example.com,+91 9876543212,Startup Inc,Delhi,Delhi,India,Referral,Not interested in our services,2026-05-13 14:30:15
+Priya,Singh,priya.singh@example.com,+91 9876543213,Enterprise Corp,Pune,Maharashtra,India,India,LinkedIn,Deal closed onboarding in progress,2026-05-13 14:35:22
+Amit,Sharma,amit.sharma@example.com,+91 9876543214,Digital Agency,Hyderabad,Telangana,India,Facebook Leads,Looking for CRM solution,2026-05-13 14:40:10
+Neha,Gupta,neha.gupta@example.com,+91 9876543215,FinTech Solutions,Chennai,Tamil Nadu,India,Google Ads,Interested in pricing,2026-05-13 14:45:30
+Vikram,Singh,vikram.singh@example.com,+91 9876543216,Healthcare Plus,Ahmedabad,Gujarat,India,Website,Request callback next week,2026-05-13 14:50:15
+Anjali,Reddy,anjali.reddy@example.com,+91 9876543217,EdTech Innovators,Jaipur,Rajasthan,India,Referral,Need demo for team,2026-05-13 14:55:20

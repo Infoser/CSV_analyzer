@@ -1,0 +1,6 @@
+Contact_Name,Email_Address,Phone_Number,Company_Name,City_Name,State_Name,Country_Name,Assigned_To,Current_Status,Remarks,Lead_Date
+Frank Ocean,frank.ocean@music.com,+1-555-0199,Music Inc,Nashville,TN,USA,agent1@crm.com,New,From conference,2026-05-13
+Grace Hopper,grace.hopper@compute.com,+1-555-0198,ComputeLabs,San Francisco,CA,USA,agent1@crm.com,Contacted,Technical evaluation,2026-05-13
+Henry Ford,henry.ford@auto.com,+1-555-0197,AutoWorks,Detroit,MI,USA,agent2@crm.com,Qualified,Fleet purchase,2026-05-13
+Iris West,iris.west@news.com,+1-555-0196,Daily Planet,Central City,MO,USA,agent2@crm.com,Proposal,Media partnership,2026-05-13
+Jack Sparrow,jack.sparrow@pirate.com,+1-555-0195,Black Pearl,Port Royal,JM,USA,agent3@crm.com,Closed Won,Adventure deal,2026-05-13

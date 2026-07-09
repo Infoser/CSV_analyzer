@@ -1,0 +1,10 @@
+name,email,phone,company,city,state,country,owner,status,notes,created_at,source,possession,desc,extra1,extra2,extra3
+John Doe,john@example.com,+91 9876543210,GrowEasy,Mumbai,Maharashtra,India,test@gmail.com,GOOD_LEAD_FOLLOW_UP,Client asking to reschedule demo,2026-05-13 14:20:48,,,
+Sarah Johnson,sarah@example.com,+91 9876543211,Tech Solutions,Bangalore,Karnataka,India,test@gmail.com,DID_NOT_CONNECT,"Person was busy, will try again next week",2026-05-13 14:25:30,,,
+Rajesh Patel,rajesh@example.com,+91 9876543212,Startup Inc,Delhi,Delhi,India,test@gmail.com,BAD_LEAD,Not interested in our services,2026-05-13 14:30:15,,,
+Priya Singh,priya@example.com,+91 9876543213,Enterprise Corp,Pune,Maharashtra,India,test@gmail.com,SALE_DONE,"Deal closed, onboarding in progress",2026-05-13 14:35:22,,,
+Amit Sharma,,+91 9876543214,Digital Agency,Hyderabad,Telangana,India,test@gmail.com,GOOD_LEAD_FOLLOW_UP,No email provided but has phone,2026-05-13 14:40:10,,,
+Neha Gupta,neha@example.com,,FinTech Solutions,Chennai,Tamil Nadu,India,test@gmail.com,GOOD_LEAD_FOLLOW_UP,Has email but no phone,2026-05-13 14:45:30,,,
+Vikram Singh,,,Healthcare Plus,Ahmedabad,Gujarat,India,test@gmail.com,BAD_LEAD,Missing email and phone - should be skipped,2026-05-13 14:50:15,,,
+Anjali Reddy,anjali@example.com,+91 9876543217,EdTech Innovators,Jaipur,Rajasthan,India,test@gmail.com,DID_NOT_CONNECT,"Multiple emails: anjali@alt.com, anjali@work.com",2026-05-13 14:55:20,,,
+Multiple Phones,multi@example.com,"+91 9876543218; +91 8765432198; +1 555-0100",MultiCorp,Mumbai,Maharashtra,India,test@gmail.com,GOOD_LEAD_FOLLOW_UP,"Multiple phones: +91 9876543218, +91 8765432198, +1 555-0100",2026-05-13 15:00:00,,,
